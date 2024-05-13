@@ -109,6 +109,11 @@
 %type <expr>            conditional_expression
 %type <expr>            constant_expression
 %type <expr>            assignment_expression
+%type <expr>            initializer
+%type <expr>            initializer_list
+%type <expr>            designation
+%type <expr>            designator_list
+%type <expr>            designator
 %type <expr>            expr
 %type <expr>            asm_stmt
 
@@ -153,7 +158,7 @@ decls:      decls decl
             }
 decl:       var_decl ';'
             { $$ = $1; }
-        |   var_decl '=' expr ';'
+        |   var_decl '=' initializer ';'
             { $1->SetInit($3);
               $$ = $1; 
             }
@@ -192,6 +197,32 @@ type:   type '*'
                 $$ = dynamic_cast<cTypeDecl*>($1->GetDecl()); 
                 if ($$->HasSemanticError()) YYERROR;
             }
+
+initializer: expr
+            { $$ = $1; }
+        | '{' initializer_list '}'
+            { $$ = $2; }
+        | '{' initializer_list ',' '}'
+            { $$ = $2; }
+
+initializer_list: designation initializer
+            { semantic_error("Initializer list not implemented", yylineno); YYERROR; }
+        | initializer_list ',' designation initializer
+            { semantic_error("Initializer list not implemented", yylineno); YYERROR; }
+
+designation: designator_list '='
+            { $$ = $1; }
+        | /* empty */            { $$ = NULL; }
+
+designator_list: designator
+            {}
+        | designator_list designator
+            {}
+
+designator: '[' constant_expression ']'
+            {}
+        | '.' IDENTIFIER
+            {}
 
 // Added by Joe
 struct_decl:  struct_header open decls close 
